@@ -29,31 +29,17 @@ client.on(Events.MessageCreate, async msg => {
 
     // all bot commands start with '!'
     isCommand = Array.from(msgContent)[0] === '!' || Array.from(msgContent)[0];
-    // ignore messages that start with a tag of a user
-    isMention = Array.from(msgContent)[0] === '<';
+
     // if unable to find referenced message, returns an error and sets isReply to false
     try{
         refMsg = await msg.fetchReference();
         isReply = true;
-        try{
-            let refMsgAuthorId = refMsg.author.id;
-        } catch (error) {
-            console.log("Error getting reference message author ID: " + error);
-        }
     } catch(error){
         isReply = false;
     }
 
-    if(msgContent.substring(0,1) === '^') {
-        msgContent = msgContent.replace('^', '');
-    }
-
     if(msgContent.substring(0,5) === ("!test")) {
         await msg.reply("Hello world!");
-    }
-
-    if(isReply && !isCommand && !isMention && refMsgAuthorId === clientUserId) {
-        await chat(msg);
     }
 
     if(msgContent.substring(0,6) === ("!turbo") && SD_TURBO) {

@@ -20,12 +20,14 @@ CORS(app)
 print("--> Starting the server. This may take some time")
 
 # Environment variables (models need to be enabled by setting the corresponding environment variable to TRUE)
+DEV_MODE = os.getenv("DEV_MODE") == "true"
+
 OUTPUT_DIR = os.getenv("OUTPUT_DIR")
 MAX_NUM_IMAGES=os.getenv("MAX_NUM_IMAGES")
 NEGATIVE_PROMPT = os.getenv("NEGATIVE_PROMPT")
 
-SD_TURBO = os.getenv("SD_TURBO")
-if(SD_TURBO == "true"):
+SD_TURBO = os.getenv("SD_TURBO") == "true"
+if(SD_TURBO):
     SD_TURBO_INFERENCE_STEPS = os.getenv("SD_TURBO_INFERENCE_STEPS")
     SD_TURBO_WIDTH = os.getenv("SD_TURBO_WIDTH")
     SD_TURBO_HEIGHT = os.getenv("SD_TURBO_HEIGHT")
@@ -38,12 +40,24 @@ if cudaAvailable:
 else:
     device = torch.device('cpu')
 
-sdTurboPipe = AutoPipelineForText2Image.from_pretrained("stabilityai/sd-turbo", torch_dtype=torch.float16, variant="fp16")
-sdTurboPipe.to(device)
+if not DEV_MODE:
+    print("--> Loading Stable Diffusion Turbo pipeline...")
+    sdTurboPipe = AutoPipelineForText2Image.from_pretrained(
+        "stabilityai/sd-turbo",
+        torch_dtype=torch.float16,
+        variant="fp16"
+    )
+    sdTurboPipe.to(device)
+else:
+    print("--> DEV_MODE is true: Skipping model loading")
+    sdTurboPipe = None
 
 processing_lock = threading.Lock()
 
 def process(prompt: str, pipeline: str, num: int, img_url: str):
+    if DEV_MODE:
+        print(f"[DEV_MODE] Pretending to generate {num} image(s) for prompt: '{prompt}'")
+        return [f"fake_image_{uuid.uuid4()}.png" for _ in range(num)]
     start_time = time.time()
     seed = random.randint(0, 100000)
     if cudaAvailable:
@@ -53,7 +67,7 @@ def process(prompt: str, pipeline: str, num: int, img_url: str):
     generation_output = []
     match pipeline:
         case "SD_TURBO":
-            if(SD_TURBO == "true"):
+            if(SD_TURBO):
                 images_array = sdTurboPipe(
                     prompt=prompt,
                     num_inference_steps=int(SD_TURBO_INFERENCE_STEPS),
@@ -94,5 +108,16 @@ def save_image(image, output_dir):
     image.save(image_path, format='png')
     return image_path
 
-if __name__ == "__main__":
-    app.run(host=os.getenv("BACKEND_ADDRESS"), port=(os.getenv("PORT")))
+if DEV_MODE:
+    if __name__ == "__main__":
+        app.run(
+            host=os.getenv("BACKEND_ADDRESS"),
+            port=(os.getenv("PORT")),
+            debug=True,
+            use_reloader=True)
+else:
+    if __name__ == "__main__":
+        app.run(
+            host=os.getenv("BACKEND_ADDRESS"),
+            port=(os.getenv("PORT")),
+            )
