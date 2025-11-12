@@ -16,7 +16,7 @@ export async function handleTurbo(msg) {
     } else {
         queue.push({
             msg,
-            pipeline: 'SD_TURBO',
+            pipeline: 'SDXL_TURBO',
             enqueueMessageId: enqueueMessage.id
         });
     }

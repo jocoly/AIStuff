@@ -26,11 +26,11 @@ OUTPUT_DIR = os.getenv("OUTPUT_DIR")
 MAX_NUM_IMAGES=os.getenv("MAX_NUM_IMAGES")
 NEGATIVE_PROMPT = os.getenv("NEGATIVE_PROMPT")
 
-SD_TURBO = os.getenv("SD_TURBO") == "true"
-if(SD_TURBO):
-    SD_TURBO_INFERENCE_STEPS = os.getenv("SD_TURBO_INFERENCE_STEPS")
-    SD_TURBO_WIDTH = os.getenv("SD_TURBO_WIDTH")
-    SD_TURBO_HEIGHT = os.getenv("SD_TURBO_HEIGHT")
+SDXL_TURBO = os.getenv("SDXL_TURBO") == "true"
+if(SDXL_TURBO):
+    SDXL_TURBO_INFERENCE_STEPS = os.getenv("SDXL_TURBO_INFERENCE_STEPS")
+    SDXL_TURBO_WIDTH = os.getenv("SDXL_TURBO_WIDTH")
+    SDXL_TURBO_HEIGHT = os.getenv("SDXL_TURBO_HEIGHT")
 
 # Check for CUDA-enabled GPU
 cudaAvailable = torch.cuda.is_available()
@@ -42,15 +42,15 @@ else:
 
 if not DEV_MODE:
     print("--> Loading Stable Diffusion Turbo pipeline...")
-    sdTurboPipe = AutoPipelineForText2Image.from_pretrained(
-        "stabilityai/sd-turbo",
+    sdXLTurboPipe = AutoPipelineForText2Image.from_pretrained(
+        "stabilityai/sdxl-turbo",
         torch_dtype=torch.float16,
         variant="fp16"
     )
-    sdTurboPipe.to(device)
+    sdXLTurboPipe.to(device)
 else:
     print("--> DEV_MODE is true: Skipping model loading")
-    sdTurboPipe = None
+    sdXLTurboPipe = None
 
 processing_lock = threading.Lock()
 
@@ -66,15 +66,15 @@ def process(prompt: str, pipeline: str, num: int, img_url: str):
         generator = None
     generation_output = []
     match pipeline:
-        case "SD_TURBO":
-            if(SD_TURBO):
-                images_array = sdTurboPipe(
+        case "SDXL_TURBO":
+            if(SDXL_TURBO):
+                images_array = sdXLTurboPipe(
                     prompt=prompt,
-                    num_inference_steps=int(SD_TURBO_INFERENCE_STEPS),
+                    num_inference_steps=int(SDXL_TURBO_INFERENCE_STEPS),
                     num_images_per_prompt=num,
                     guidance_scale=0.0,
-                    width=int(SD_TURBO_WIDTH),
-                    height=int(SD_TURBO_HEIGHT),
+                    width=int(SDXL_TURBO_WIDTH),
+                    height=int(SDXL_TURBO_HEIGHT),
                     generator=generator
                 ).images
                 Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
@@ -82,7 +82,7 @@ def process(prompt: str, pipeline: str, num: int, img_url: str):
                     image_path = save_image(images_array[index], OUTPUT_DIR)
                     generation_output.append(image_path)
             else:
-                print("SD_TURBO is disabled.")
+                print("SDXL_TURBO is disabled.")
     gen_time = '%.3f'%(time.time() - start_time)
     print(f"Created generation in {gen_time} seconds")
     return generation_output

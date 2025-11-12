@@ -17,7 +17,7 @@ const CONTAIN_BOT = process.env.CONTAIN_BOT === 'true';
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID;
 
 const SCRYFALL = process.env.SCRYFALL === 'true';
-const SD_TURBO = process.env.SD_TURBO === 'true';
+const SDXL_TURBO = process.env.SDXL_TURBO === 'true';
 
 let isReply, refMsg, isCommand, isMention;
 
@@ -36,7 +36,7 @@ client.on(Events.MessageCreate, async msg => {
     isCommand = Array.from(msgContent)[0] === '!' || Array.from(msgContent)[0];
 
     if (SCRYFALL && await handleScryfall(msg)) return;
-    if (SD_TURBO && await handleTurbo(msg)) return;
+    if (SDXL_TURBO && await handleTurbo(msg)) return;
     // if unable to find referenced message, returns an error and sets isReply to false
     
 
