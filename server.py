@@ -71,6 +71,7 @@ def process(prompt: str, pipeline: str, num: int, img_url: str):
                 images_array = sdTurboPipe(
                     prompt=prompt,
                     num_inference_steps=int(SD_TURBO_INFERENCE_STEPS),
+                    num_images_per_prompt=num,
                     guidance_scale=0.0,
                     width=int(SD_TURBO_WIDTH),
                     height=int(SD_TURBO_HEIGHT),
